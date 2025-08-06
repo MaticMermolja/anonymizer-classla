@@ -25,7 +25,7 @@ def main():
     logger.info("🚀 Starting Flask server immediately...")
     
     # Pre-initialize CLASSLA models before starting Flask
-    logger.info("📦 Pre-initializing CLASSLA models...")
+    logger.info("📦 Loading pre-downloaded CLASSLA models...")
     start_time = time.time()
     
     try:

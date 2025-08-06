@@ -25,9 +25,6 @@ COPY docker_api.py .
 # Copy startup script
 COPY startup.py .
 
-# Expose port
-EXPOSE 8000
-
 # Create persistent directory for CLASSLA models
 RUN mkdir -p /data/classla_resources
 
@@ -38,6 +35,12 @@ ENV PORT=8000
 ENV CLASSLA_RESOURCES_DIR=/data/classla_resources
 ENV OMP_NUM_THREADS=4
 ENV MKL_NUM_THREADS=4
+
+# Pre-download CLASSLA models during build
+RUN python -c "import os; os.environ['CLASSLA_RESOURCES'] = '/data/classla_resources'; print('📦 Pre-downloading CLASSLA models...'); import classla; nlp = classla.Pipeline('sl', processors='tokenize,pos,lemma,ner'); print('✅ CLASSLA models downloaded successfully!')"
+
+# Expose port
+EXPOSE 8000
 
 # Run the API server
 CMD ["python", "startup.py"] 
