@@ -22,6 +22,9 @@ COPY comprehensive_gdpr_anonymizer.py .
 # Create a simple API server
 COPY docker_api.py .
 
+# Copy startup script
+COPY startup.py .
+
 # Expose port
 EXPOSE 8000
 
@@ -33,6 +36,8 @@ ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PORT=8000
 ENV CLASSLA_RESOURCES_DIR=/data/classla_resources
+ENV OMP_NUM_THREADS=4
+ENV MKL_NUM_THREADS=4
 
 # Run the API server
-CMD ["python", "docker_api.py"] 
+CMD ["python", "startup.py"] 

@@ -63,17 +63,30 @@ def health_check():
         # Check if anonymizer is initialized
         anonymizer_status = 'initialized' if anonymizer is not None else 'not_initialized'
         
-        return jsonify({
-            'status': 'healthy',
-            'service': 'GDPR Anonymizer API',
-            'version': '1.0.0',
-            'anonymizer_status': anonymizer_status
-        })
+        # Only return healthy if anonymizer is ready
+        if anonymizer is not None:
+            return jsonify({
+                'status': 'healthy',
+                'service': 'GDPR Anonymizer API',
+                'version': '1.0.0',
+                'anonymizer_status': anonymizer_status,
+                'ready': True
+            })
+        else:
+            return jsonify({
+                'status': 'initializing',
+                'service': 'GDPR Anonymizer API',
+                'version': '1.0.0',
+                'anonymizer_status': anonymizer_status,
+                'ready': False,
+                'message': 'Anonymizer is still initializing...'
+            }), 503
     except Exception as e:
         logger.error(f"Health check failed: {str(e)}")
         return jsonify({
             'status': 'unhealthy',
-            'error': str(e)
+            'error': str(e),
+            'ready': False
         }), 500
 
 @app.route('/anonymize', methods=['POST'])
@@ -109,13 +122,10 @@ def anonymize_text():
                 'error': 'Text must be a non-empty string'
             }), 400
         
-        # Initialize anonymizer if needed
-        try:
-            anonymizer = initialize_anonymizer()
-        except Exception as e:
-            logger.error(f"Failed to initialize anonymizer: {str(e)}")
+        # Check if anonymizer is ready
+        if anonymizer is None:
             return jsonify({
-                'error': 'Service temporarily unavailable - initializing models',
+                'error': 'Service temporarily unavailable - models still initializing',
                 'message': 'Please try again in a few minutes'
             }), 503
         
@@ -294,10 +304,10 @@ def get_info():
     })
 
 if __name__ == '__main__':
+    # This is now handled by startup.py
     # Get port from environment (Railway sets this)
     port = int(os.environ.get('PORT', 8000))
     
-    # Run the Flask app (anonymizer will be initialized on first request)
+    # Run the Flask app
     logger.info(f"Starting GDPR Anonymizer API server on port {port}...")
-    logger.info("Anonymizer will be initialized on first request to save startup time...")
     app.run(host='0.0.0.0', port=port, debug=False) 
