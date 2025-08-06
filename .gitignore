@@ -10,8 +10,8 @@ ENV/
 env.bak/
 venv.bak/
 
-# CLASSLA models (will be downloaded automatically)
-classla_resources/
+# CLASSLA models (included in repository for Docker)
+# classla_resources/
 
 # CLASSLA repository (separate git repo)
 classla/

@@ -24,8 +24,8 @@ def main():
     # Start Flask app FIRST (so Railway can do health checks)
     logger.info("🚀 Starting Flask server immediately...")
     
-    # Load pre-copied CLASSLA models
-    logger.info("📦 Loading pre-copied CLASSLA models...")
+    # Load pre-downloaded CLASSLA models
+    logger.info("📦 Loading pre-downloaded CLASSLA models...")
     start_time = time.time()
     
     try:
