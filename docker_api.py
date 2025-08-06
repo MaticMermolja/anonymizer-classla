@@ -27,8 +27,45 @@ def root():
     return jsonify({
         'status': 'ok',
         'service': 'GDPR Anonymizer API',
-        'message': 'Service is running'
+        'message': 'Service is running',
+        'endpoints': {
+            'health': '/health',
+            'info': '/info',
+            'anonymize': '/anonymize',
+            'test_simple': '/test-simple'
+        }
     })
+
+@app.route('/test-simple', methods=['POST'])
+def test_simple():
+    """Simple test endpoint that doesn't require CLASSLA initialization."""
+    try:
+        data = request.get_json()
+        if not data or 'text' not in data:
+            return jsonify({'error': 'Missing text field'}), 400
+        
+        text = data['text']
+        
+        # Simple regex-based masking for testing
+        import re
+        
+        # Mask emails
+        text = re.sub(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b', '<MASKED_EMAIL>', text)
+        
+        # Mask phone numbers (simple pattern)
+        text = re.sub(r'\+\d{1,3}\s?\d{1,4}\s?\d{1,4}\s?\d{1,4}', '<MASKED_PHONE>', text)
+        
+        return jsonify({
+            'original_text': data['text'],
+            'anonymized_text': text,
+            'total_entities_masked': 2,  # Placeholder
+            'privacy_risk': 'low',
+            'processing_time_seconds': 0.1,
+            'note': 'Simple regex-based masking (CLASSLA not loaded)'
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 def initialize_anonymizer():
     """Initialize the anonymizer once at startup."""
@@ -37,11 +74,22 @@ def initialize_anonymizer():
         logger.info("Initializing GDPR Anonymizer...")
         start_time = time.time()
         
-        # Initialize with Slovenian language (can be made configurable)
-        anonymizer = ComprehensiveGDPRAnonymizer(language='sl', use_gpu=False)
-        
-        init_time = time.time() - start_time
-        logger.info(f"✓ Anonymizer initialized in {init_time:.2f} seconds")
+        try:
+            # Set CLASSLA resources directory to persistent storage
+            # Railway provides /data directory for persistent storage
+            classla_dir = os.environ.get('CLASSLA_RESOURCES_DIR', '/data/classla_resources')
+            os.environ['CLASSLA_RESOURCES'] = classla_dir
+            
+            logger.info(f"Using CLASSLA resources directory: {classla_dir}")
+            
+            # Initialize with Slovenian language (can be made configurable)
+            anonymizer = ComprehensiveGDPRAnonymizer(language='sl', use_gpu=False)
+            
+            init_time = time.time() - start_time
+            logger.info(f"✓ Anonymizer initialized in {init_time:.2f} seconds")
+        except Exception as e:
+            logger.error(f"Failed to initialize anonymizer: {str(e)}")
+            raise e
     
     return anonymizer
 
@@ -99,16 +147,30 @@ def anonymize_text():
             }), 400
         
         # Initialize anonymizer if needed
-        anonymizer = initialize_anonymizer()
+        try:
+            anonymizer = initialize_anonymizer()
+        except Exception as e:
+            logger.error(f"Failed to initialize anonymizer: {str(e)}")
+            return jsonify({
+                'error': 'Service temporarily unavailable - initializing models',
+                'message': 'Please try again in a few minutes'
+            }), 503
         
         # Process the text
         start_time = time.time()
-        result = anonymizer.anonymize_text(
-            text=text,
-            use_descriptive_masks=use_descriptive_masks,
-            preserve_types=preserve_types
-        )
-        processing_time = time.time() - start_time
+        try:
+            result = anonymizer.anonymize_text(
+                text=text,
+                use_descriptive_masks=use_descriptive_masks,
+                preserve_types=preserve_types
+            )
+            processing_time = time.time() - start_time
+        except Exception as e:
+            logger.error(f"Error during anonymization: {str(e)}")
+            return jsonify({
+                'error': 'Processing error',
+                'message': str(e)
+            }), 500
         
         # Prepare response
         response = {

@@ -10,7 +10,7 @@ services:
       - PYTHONDONTWRITEBYTECODE=1
     volumes:
       # Mount a volume for CLASSLA models to persist between container restarts
-      - classla_models:/root/classla_resources
+      - classla_models:/data/classla_resources
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]

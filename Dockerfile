@@ -25,10 +25,14 @@ COPY docker_api.py .
 # Expose port
 EXPOSE 8000
 
+# Create persistent directory for CLASSLA models
+RUN mkdir -p /data/classla_resources
+
 # Set environment variables for better performance
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PORT=8000
+ENV CLASSLA_RESOURCES_DIR=/data/classla_resources
 
 # Run the API server
 CMD ["python", "docker_api.py"] 
