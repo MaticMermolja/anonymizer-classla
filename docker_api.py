@@ -27,45 +27,8 @@ def root():
     return jsonify({
         'status': 'ok',
         'service': 'GDPR Anonymizer API',
-        'message': 'Service is running',
-        'endpoints': {
-            'health': '/health',
-            'info': '/info',
-            'anonymize': '/anonymize',
-            'test_simple': '/test-simple'
-        }
+        'message': 'Service is running'
     })
-
-@app.route('/test-simple', methods=['POST'])
-def test_simple():
-    """Simple test endpoint that doesn't require CLASSLA initialization."""
-    try:
-        data = request.get_json()
-        if not data or 'text' not in data:
-            return jsonify({'error': 'Missing text field'}), 400
-        
-        text = data['text']
-        
-        # Simple regex-based masking for testing
-        import re
-        
-        # Mask emails
-        text = re.sub(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b', '<MASKED_EMAIL>', text)
-        
-        # Mask phone numbers (simple pattern)
-        text = re.sub(r'\+\d{1,3}\s?\d{1,4}\s?\d{1,4}\s?\d{1,4}', '<MASKED_PHONE>', text)
-        
-        return jsonify({
-            'original_text': data['text'],
-            'anonymized_text': text,
-            'total_entities_masked': 2,  # Placeholder
-            'privacy_risk': 'low',
-            'processing_time_seconds': 0.1,
-            'note': 'Simple regex-based masking (CLASSLA not loaded)'
-        })
-        
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
 
 def initialize_anonymizer():
     """Initialize the anonymizer once at startup."""
