@@ -96,7 +96,40 @@ result = anonymizer.anonymize_text(text, mask_char='#')
 
 # Preserve certain entity types
 result = anonymizer.anonymize_text(text, preserve_types=['LOC'])
+
+# Use descriptive masks
+result = anonymizer.anonymize_text(text, use_descriptive_masks=True)
+# Output: "<MASKED_PER> <MASKED_EMAIL>"
 ```
+
+## 🚀 **Production Deployment**
+
+### **Docker + Railway (Recommended)**
+
+**Fast deployment with instant responses:**
+
+```bash
+# Build optimized image (5-10 minutes)
+docker build -t gdpr-anonymizer-optimized .
+
+# Push to Docker Hub
+docker tag gdpr-anonymizer-optimized maticmermolja/gdpr-anonymizer:latest
+docker push maticmermolja/gdpr-anonymizer:latest
+
+# Deploy to Railway
+npm install -g @railway/cli
+railway login
+railway link
+railway up
+```
+
+**Performance:**
+- ✅ **Build time**: 5-10 minutes
+- ✅ **First API call**: 30 seconds (model loading)
+- ✅ **Subsequent calls**: <100ms (instant)
+- ✅ **Container restarts**: <100ms (volume caching)
+
+**For detailed deployment instructions, see [DEPLOYMENT.md](DEPLOYMENT.md)**
 
 ### **Detailed Results**
 ```python

@@ -1,46 +1,38 @@
-# Use Python 3.11 slim image for minimal size
+# Optimal Dockerfile: Fast build + Fast runtime
 FROM python:3.11-slim
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
 WORKDIR /app
 
-# Install system dependencies for CLASSLA and PyTorch
-RUN apt-get update && apt-get install -y \
-    gcc \
-    g++ \
-    && rm -rf /var/lib/apt/lists/*
-
-# Copy requirements first for better caching
+# Copy requirements and install Python dependencies
 COPY requirements.txt .
-
-# Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the anonymizer code
+# Download CLASSLA models (fast - just downloads files)
+RUN python -c "import classla; classla.download('sl')"
+
+# Copy application code
 COPY comprehensive_gdpr_anonymizer.py .
-
-# Create a simple API server
 COPY docker_api.py .
-
-# Copy startup script
 COPY startup.py .
 
-# Create directory for CLASSLA models
-RUN mkdir -p /data/classla_resources
-
-# Set environment variables for better performance
-ENV PYTHONUNBUFFERED=1
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PORT=8000
-ENV CLASSLA_RESOURCES_DIR=/data/classla_resources
-ENV OMP_NUM_THREADS=4
-ENV MKL_NUM_THREADS=4
-
-# Download CLASSLA models during build
-RUN python -c "import os; os.environ['CLASSLA_RESOURCES'] = '/data/classla_resources'; print('📦 Downloading CLASSLA models...'); import classla; nlp = classla.Pipeline('sl', processors='tokenize,pos,lemma,ner'); print('✅ Models downloaded!')"
+# Create volume for model caching
+VOLUME /root/classla_resources
 
 # Expose port
 EXPOSE 8000
 
-# Run the API server
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PORT=8000
+
+# Use optimized startup with caching
 CMD ["python", "startup.py"] 

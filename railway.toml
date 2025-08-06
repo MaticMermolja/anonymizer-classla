@@ -1,0 +1,13 @@
+# Use pre-built image from Docker Hub (no build needed)
+[deploy]
+image = "maticmermolja/gdpr-anonymizer:latest"
+startCommand = "python startup.py"
+healthcheckPath = "/"
+healthcheckTimeout = 300
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10
+
+# Volume for model persistence
+[[deploy.volumes]]
+source = "classla_models"
+target = "/root/classla_resources" 
