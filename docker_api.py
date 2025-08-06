@@ -63,26 +63,16 @@ def health_check():
         # Check if anonymizer is initialized
         anonymizer_status = 'initialized' if anonymizer is not None else 'not_initialized'
         
-        # Return healthy for basic service (Flask is running)
-        # Railway health checks should pass even during CLASSLA initialization
-        if anonymizer is not None:
-            return jsonify({
-                'status': 'healthy',
-                'service': 'GDPR Anonymizer API',
-                'version': '1.0.0',
-                'anonymizer_status': anonymizer_status,
-                'ready': True,
-                'message': 'Service fully operational'
-            })
-        else:
-            return jsonify({
-                'status': 'healthy',  # Changed from 'initializing' to 'healthy'
-                'service': 'GDPR Anonymizer API',
-                'version': '1.0.0',
-                'anonymizer_status': anonymizer_status,
-                'ready': False,
-                'message': 'Service running, CLASSLA models loading in background'
-            })
+        # Always return healthy if Flask is responding
+        # This means the service is at least starting up
+        return jsonify({
+            'status': 'healthy',
+            'service': 'GDPR Anonymizer API',
+            'version': '1.0.0',
+            'anonymizer_status': anonymizer_status,
+            'ready': anonymizer is not None,
+            'message': 'Service starting up' if anonymizer is None else 'Service fully operational'
+        })
     except Exception as e:
         logger.error(f"Health check failed: {str(e)}")
         return jsonify({

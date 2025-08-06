@@ -24,20 +24,8 @@ def main():
     # Start Flask app FIRST (so Railway can do health checks)
     logger.info("🚀 Starting Flask server immediately...")
     
-    # Start Flask in a separate thread so we can initialize CLASSLA in background
-    import threading
-    
-    def start_flask():
-        app.run(host='0.0.0.0', port=port, debug=False)
-    
-    flask_thread = threading.Thread(target=start_flask, daemon=True)
-    flask_thread.start()
-    
-    # Give Flask a moment to start
-    time.sleep(2)
-    
-    # Now initialize CLASSLA models in background
-    logger.info("📦 Pre-initializing CLASSLA models in background...")
+    # Pre-initialize CLASSLA models before starting Flask
+    logger.info("📦 Pre-initializing CLASSLA models...")
     start_time = time.time()
     
     try:
@@ -48,14 +36,11 @@ def main():
         
     except Exception as e:
         logger.error(f"❌ Failed to initialize CLASSLA models: {str(e)}")
-        logger.error("Service is running but anonymization will fail")
+        logger.error("Service will start but anonymization will fail")
     
-    # Keep the main thread alive
-    try:
-        while True:
-            time.sleep(60)  # Sleep for 1 minute
-    except KeyboardInterrupt:
-        logger.info("Shutting down...")
+    # Start Flask server
+    logger.info("🚀 Starting Flask server...")
+    app.run(host='0.0.0.0', port=port, debug=False)
 
 if __name__ == '__main__':
     main() 
