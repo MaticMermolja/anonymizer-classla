@@ -6,7 +6,7 @@
   },
   "deploy": {
     "startCommand": "python docker_api.py",
-    "healthcheckPath": "/health",
+            "healthcheckPath": "/",
     "healthcheckTimeout": 300,
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 10

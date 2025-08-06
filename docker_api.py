@@ -21,6 +21,15 @@ app = Flask(__name__)
 # Global anonymizer instance (initialized once)
 anonymizer = None
 
+@app.route('/', methods=['GET'])
+def root():
+    """Root endpoint for basic health check."""
+    return jsonify({
+        'status': 'ok',
+        'service': 'GDPR Anonymizer API',
+        'message': 'Service is running'
+    })
+
 def initialize_anonymizer():
     """Initialize the anonymizer once at startup."""
     global anonymizer
@@ -39,11 +48,22 @@ def initialize_anonymizer():
 @app.route('/health', methods=['GET'])
 def health_check():
     """Health check endpoint."""
-    return jsonify({
-        'status': 'healthy',
-        'service': 'GDPR Anonymizer API',
-        'version': '1.0.0'
-    })
+    try:
+        # Check if anonymizer is initialized
+        anonymizer_status = 'initialized' if anonymizer is not None else 'not_initialized'
+        
+        return jsonify({
+            'status': 'healthy',
+            'service': 'GDPR Anonymizer API',
+            'version': '1.0.0',
+            'anonymizer_status': anonymizer_status
+        })
+    except Exception as e:
+        logger.error(f"Health check failed: {str(e)}")
+        return jsonify({
+            'status': 'unhealthy',
+            'error': str(e)
+        }), 500
 
 @app.route('/anonymize', methods=['POST'])
 def anonymize_text():
@@ -249,12 +269,10 @@ def get_info():
     })
 
 if __name__ == '__main__':
-    # Initialize anonymizer at startup
-    initialize_anonymizer()
-    
     # Get port from environment (Railway sets this)
     port = int(os.environ.get('PORT', 8000))
     
-    # Run the Flask app
+    # Run the Flask app (anonymizer will be initialized on first request)
     logger.info(f"Starting GDPR Anonymizer API server on port {port}...")
+    logger.info("Anonymizer will be initialized on first request to save startup time...")
     app.run(host='0.0.0.0', port=port, debug=False) 
